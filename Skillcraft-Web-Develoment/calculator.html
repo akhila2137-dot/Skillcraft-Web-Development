@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculator</title>
+<style>
+  body{display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;background:#f3f4f6;font-family:system-ui}
+  .calc{width:320px;background:#111827;color:#fff;border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(2,6,23,.4)}
+  .screen{background:#0b1220;padding:12px;border-radius:8px;text-align:right;font-size:28px;margin-bottom:10px;min-height:56px}
+  .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  button{padding:14px;border-radius:8px;border:0;background:#1f2937;color:#fff;font-weight:600;cursor:pointer}
+  .op{background:#06b6d4;color:#000}
+  .wide{grid-column:span:2}
+</style>
+</head>
+<body>
+  <div class="calc" role="application" aria-label="Calculator">
+    <div id="screen" class="screen" aria-live="polite">0</div>
+    <div class="keys">
+      <button data-action="clear">C</button>
+      <button data-action="neg">+/-</button>
+      <button data-action="percent">%</button>
+      <button class="op" data-action="/">÷</button>
+
+      <button>7</button><button>8</button><button>9</button><button class="op" data-action="*">×</button>
+      <button>4</button><button>5</button><button>6</button><button class="op" data-action="-">−</button>
+      <button>1</button><button>2</button><button>3</button><button class="op" data-action="+">+</button>
+      <button class="wide">0</button><button>.</button><button class="op" data-action="=">=</button>
+    </div>
+  </div>
+
+<script>
+  const screen = document.getElementById('screen');
+  let current = '0';
+  let prev = null;
+  let op = null;
+  let resetNext = false;
+
+  function update(){ screen.textContent = current; }
+
+  function inputDigit(d){
+    if(resetNext){ current = '0'; resetNext = false; }
+    if(current === '0' && d !== '.') current = d;
+    else if(d === '.' && current.includes('.')) return;
+    else current += d;
+  }
+
+  function applyOp(action){
+    if(action === 'clear'){ current='0'; prev=null; op=null; resetNext=false; return; }
+    if(action === 'neg'){ current = String(-parseFloat(current)); return; }
+    if(action === 'percent'){ current = String(parseFloat(current)/100); return; }
+
+    if(action === '='){
+      if(op && prev!==null){
+        try{
+          const a = parseFloat(prev), b = parseFloat(current);
+          let res;
+          if(op==='+') res = a + b;
+          else if(op==='-') res = a - b;
+          else if(op==='*') res = a * b;
+          else if(op==='/') {
+            if(b===0) throw new Error('Divide by zero');
+            res = a / b;
+          }
+          current = String(Number.isFinite(res) ? parseFloat(res.toFixed(10)) : res);
+        }catch(e){
+          current = 'Error';
+        }
+        op = null; prev = null; resetNext = true;
+      }
+      return;
+    }
+
+    // operator pressed (+-*/)
+    if(op && prev !== null && !resetNext){
+      // evaluate chain
+      applyOp('=');
+    }
+    op = action;
+    prev = current;
+    resetNext = true;
+  }
+
+  document.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=> {
+      const a = btn.getAttribute('data-action');
+      if(a){
+        applyOp(a);
+      } else {
+        const t = btn.textContent.trim();
+        inputDigit(t);
+      }
+      update();
+    });
+  });
+
+  // Keyboard support
+  window.addEventListener('keydown', e=>{
+    if(e.key >= '0' && e.key <= '9') inputDigit(e.key);
+    else if(e.key === '.') inputDigit('.');
+    else if(e.key === 'Enter' || e.key === '=') applyOp('=');
+    else if(e.key === 'Backspace'){ current = current.slice(0,-1) || '0'; }
+    else if(e.key === '+'|| e.key === '-' || e.key==='*' || e.key === '/') applyOp(e.key);
+    else if(e.key.toLowerCase() === 'c') applyOp('clear');
+    update();
+  });
+
+  update();
+</script>
+</body>
+</html>

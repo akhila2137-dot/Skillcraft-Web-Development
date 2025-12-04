@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Game</title>
+<style>
+body{
+    background:#0d1220;
+    color:white;
+    font-family:Arial;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+.card{
+    background:#111827;
+    padding:20px;
+    border-radius:10px;
+    width:400px;
+}
+.answer{
+    background:#1f2937;
+    padding:10px;
+    border-radius:8px;
+    margin:8px 0;
+    cursor:pointer;
+}
+.answer:hover{
+    background:#374151;
+}
+button{
+    margin-top:15px;
+    padding:10px;
+    width:100%;
+    border:none;
+    background:#06b6d4;
+    color:black;
+    border-radius:5px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Quiz Game</h2>
+    <p id="question"></p>
+    <div id="answers"></div>
+    <p id="result"></p>
+    <button id="nextBtn">Next</button>
+</div>
+
+<script>
+const questions = [
+    {q:"HTML stands for?", a:["Hyper Trainer Marking Language","Hyper Text Markup Language","Hyper Text Making Language","High Text Machine Language"], correct:1},
+    {q:"CSS is used for?", a:["Styling","Programming","Database","None"], correct:0},
+    {q:"Which is a JavaScript framework?", a:["Laravel","Django","React","Flask"], correct:2}
+];
+
+let index=0, score=0;
+
+function loadQuestion(){
+    document.getElementById("result").textContent = "";
+    const q = questions[index];
+    document.getElementById("question").textContent = q.q;
+
+    const ansBox = document.getElementById("answers");
+    ansBox.innerHTML = "";
+
+    q.a.forEach((opt, i)=>{
+        const div = document.createElement("div");
+        div.className="answer";
+        div.textContent=opt;
+        div.onclick=()=>select(i, div);
+        ansBox.appendChild(div);
+    });
+}
+
+function select(i, element){
+    const correct = questions[index].correct;
+    if(i === correct){
+        element.style.background="#16a34a";
+        document.getElementById("result").textContent="Correct!";
+        score++;
+    }
+    else{
+        element.style.background="#dc2626";
+        document.getElementById("result").textContent="Wrong!";
+    }
+
+    [...document.getElementById("answers").children].forEach((btn, idx)=>{
+        btn.onclick=null;
+        if(idx===correct) btn.style.background="#16a34a";
+    });
+}
+
+document.getElementById("nextBtn").onclick = ()=>{
+    index++;
+    if(index >= questions.length){
+        document.querySelector(".card").innerHTML = <h2>Quiz Finished!</h2><p>Your Score: ${score} / ${questions.length}</p>;
+    } else loadQuestion();
+};
+
+loadQuestion();
+</script>
+
+</body>
+</html>
+

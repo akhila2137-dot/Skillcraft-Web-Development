@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>To-Do App</title>
+<style>
+  body{display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;background:#eef2ff;font-family:system-ui}
+  .app{width:420px;background:#fff;padding:16px;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,.08)}
+  h3{margin:0 0 12px}
+  form{display:flex;gap:8px;margin-bottom:12px}
+  input,button,select{padding:10px;border-radius:8px;border:1px solid #e6e9ef}
+  input{flex:1}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .task{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:#f8fafc}
+  .meta{font-size:12px;color:#6b7280}
+  .actions button{margin-left:6px}
+</style>
+</head>
+<body>
+  <div class="app">
+    <h3>To-Do</h3>
+    <form id="addForm">
+      <input id="text" placeholder="Add task..." required />
+      <input id="date" type="datetime-local" />
+      <button type="submit">Add</button>
+    </form>
+    <div class="list" id="tasks"></div>
+  </div>
+
+<script>
+  const form = document.getElementById('addForm');
+  const text = document.getElementById('text');
+  const date = document.getElementById('date');
+  const tasksEl = document.getElementById('tasks');
+
+  let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+
+  function save(){ localStorage.setItem('tasks', JSON.stringify(tasks)); }
+  function render(){
+    tasksEl.innerHTML='';
+    tasks.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className='task';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:600; text-decoration:${t.done ? 'line-through' : 'none'}">${escapeHtml(t.text)}</div>
+          <div class="meta">${t.datetime ? new Date(t.datetime).toLocaleString() : ''}</div>
+        </div>
+        <div class="actions">
+          <button data-act="toggle" data-i="${i}">${t.done ? 'Undo' : 'Done'}</button>
+          <button data-act="edit" data-i="${i}">Edit</button>
+          <button data-act="del" data-i="${i}">Delete</button>
+        </div>`;
+      tasksEl.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const t = text.value.trim();
+    if(!t) return;
+    tasks.unshift({text:t, datetime: date.value || null, done:false});
+    save(); render();
+    form.reset();
+  });
+
+  tasksEl.addEventListener('click', e=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const i = Number(btn.dataset.i);
+    const act = btn.dataset.act;
+    if(act === 'toggle'){ tasks[i].done = !tasks[i].done; save(); render(); }
+    else if(act === 'del'){ tasks.splice(i,1); save(); render(); }
+    else if(act === 'edit'){
+      const newText = prompt('Edit task text', tasks[i].text);
+      if(newText !== null){ tasks[i].text = newText.trim(); save(); render(); }
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
